@@ -1,5 +1,8 @@
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 const HUBS = [
   { id: 'learning', title: 'Learning Hub', desc: 'Learn something new in minutes', icon: '🎓', color: 'blue' },
@@ -52,8 +55,11 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       const target = event.target;
-      const isTyping = target instanceof HTMLElement &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      const isTyping =
+        target instanceof HTMLElement &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
 
       if (event.key === 'Escape' || (event.key === 'Backspace' && !isTyping)) {
         if (activeHub) {
@@ -63,16 +69,30 @@ export default function App() {
         return;
       }
 
-      if (isTyping || !['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)) return;
+      if (
+        isTyping ||
+        !['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)
+      ) {
+        return;
+      }
 
-      const items = Array.from(document.querySelectorAll('[data-tv-focus="true"]:not(:disabled)'))
-        .filter((el) => el.getClientRects().length > 0);
+      const items = Array.from(
+        document.querySelectorAll('[data-tv-focus="true"]:not(:disabled)')
+      ).filter((el) => el.getClientRects().length > 0);
+
       if (!items.length) return;
 
       const current = items.indexOf(document.activeElement);
       let next = current < 0 ? 0 : current;
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (next + 1) % items.length;
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (next - 1 + items.length) % items.length;
+
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        next = (next + 1) % items.length;
+      }
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        next = (next - 1 + items.length) % items.length;
+      }
+
       event.preventDefault();
       items[next].focus();
     };
@@ -92,6 +112,7 @@ export default function App() {
 
   async function askAI(event) {
     event.preventDefault();
+
     const cleanMessage = message.trim();
     if (!cleanMessage || loading) return;
 
@@ -102,20 +123,32 @@ export default function App() {
     setError('');
 
     try {
-      const response = await fetch('/api/assistant', {
+      const response = await fetch(`${API_BASE_URL}/api/assistant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: cleanMessage }),
       });
+
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'The AI request failed.');
-      if (thisRequest === requestId.current) setReply(data.reply || 'I could not create a suggestion. Try another prompt.');
+
+      if (!response.ok) {
+        throw new Error(data.error || 'The AI request failed.');
+      }
+
+      if (thisRequest === requestId.current) {
+        setReply(data.reply || 'I could not create a suggestion. Try another prompt.');
+      }
     } catch (err) {
       if (thisRequest === requestId.current) {
-        setError(err.message || 'Could not connect to Nexora AI. Check that the backend and Ollama are running.');
+        setError(
+          err.message ||
+            'Could not connect to Nexora AI. Please check the backend configuration.'
+        );
       }
     } finally {
-      if (thisRequest === requestId.current) setLoading(false);
+      if (thisRequest === requestId.current) {
+        setLoading(false);
+      }
     }
   }
 
@@ -128,11 +161,20 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#" onClick={(e) => { e.preventDefault(); goHome(); }} aria-label="Nexora Fire TV home">
+        <a
+          className="brand"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            goHome();
+          }}
+          aria-label="Nexora Fire TV home"
+        >
           NEXORA <span>Fire TV</span>
         </a>
+
         <div className="topbar-right">
-          <span className="live-dot" /> LOCAL AI · GEMMA
+          <span className="live-dot" /> NEXORA AI
         </div>
       </header>
 
@@ -141,15 +183,25 @@ export default function App() {
           <>
             <section className="hero-copy">
               <p className="eyebrow">YOUR TIME, WELL SPENT</p>
-              <h1>A smarter way to <span>spend your screen time.</span></h1>
-              <p className="intro">Learn, reset, connect, and keep your mind sharp — with a TV experience designed for the whole room.</p>
-              <p className="remote-tip"><span>← ↑ ↓ →</span> Navigate <span>OK / ENTER</span> Select <span>ESC</span> Back</p>
+              <h1>
+                A smarter way to <span>spend your screen time.</span>
+              </h1>
+              <p className="intro">
+                Learn, reset, connect, and keep your mind sharp — with a TV
+                experience designed for the whole room.
+              </p>
+              <p className="remote-tip">
+                <span>← ↑ ↓ →</span> Navigate <span>OK / ENTER</span> Select{' '}
+                <span>ESC</span> Back
+              </p>
             </section>
 
             <section className="hub-grid" aria-label="Nexora hubs">
               {HUBS.map((hub, index) => (
                 <button
-                  className={`hub-card ${hub.color} ${focusedIndex === index ? 'selected' : ''}`}
+                  className={`hub-card ${hub.color} ${
+                    focusedIndex === index ? 'selected' : ''
+                  }`}
                   key={hub.id}
                   type="button"
                   data-tv-focus="true"
@@ -158,25 +210,44 @@ export default function App() {
                   onClick={() => openHub(hub)}
                   aria-label={`Open ${hub.title}: ${hub.desc}`}
                 >
-                  <span className="hub-icon" aria-hidden="true">{hub.icon}</span>
+                  <span className="hub-icon" aria-hidden="true">
+                    {hub.icon}
+                  </span>
                   <span className="hub-title">{hub.title}</span>
                   <span className="hub-desc">{hub.desc}</span>
-                  <span className="card-open">Explore <span aria-hidden="true">↗</span></span>
+                  <span className="card-open">
+                    Explore <span aria-hidden="true">↗</span>
+                  </span>
                 </button>
               ))}
             </section>
 
             <section className="quick-section">
               <div className="section-heading">
-                <div><p className="eyebrow">A GOOD PLACE TO START</p><h2>Quick picks</h2></div>
+                <div>
+                  <p className="eyebrow">A GOOD PLACE TO START</p>
+                  <h2>Quick picks</h2>
+                </div>
                 <p>Choose a card to ask Nexora AI</p>
               </div>
+
               <div className="quick-grid">
                 {QUICK_IDEAS.map((idea) => (
-                  <button className="quick-card" key={idea.title} type="button" data-tv-focus="true" onClick={() => { openHub(HUBS[4]); setMessage(idea.prompt); }}>
+                  <button
+                    className="quick-card"
+                    key={idea.title}
+                    type="button"
+                    data-tv-focus="true"
+                    onClick={() => {
+                      openHub(HUBS[4]);
+                      setMessage(idea.prompt);
+                    }}
+                  >
                     <span className="quick-icon">{idea.icon}</span>
                     <span className="quick-title">{idea.title}</span>
-                    <span className="quick-meta">{idea.time} · {idea.hub}</span>
+                    <span className="quick-meta">
+                      {idea.time} · {idea.hub}
+                    </span>
                     <span className="quick-arrow">Ask Nexora ↗</span>
                   </button>
                 ))}
@@ -185,10 +256,25 @@ export default function App() {
           </>
         ) : (
           <section className="hub-view">
-            <button className="back-button" type="button" data-tv-focus="true" data-back-button onClick={goHome}>← <span>Back to Home</span></button>
+            <button
+              className="back-button"
+              type="button"
+              data-tv-focus="true"
+              data-back-button
+              onClick={goHome}
+            >
+              ← <span>Back to Home</span>
+            </button>
+
             <div className="view-heading">
-              <div className={`large-hub-icon ${activeHub.color}`}>{activeHub.icon}</div>
-              <div><p className="eyebrow">NEXORA EXPERIENCE</p><h1>{activeHub.title}</h1><p className="intro">{activeHub.desc}</p></div>
+              <div className={`large-hub-icon ${activeHub.color}`}>
+                {activeHub.icon}
+              </div>
+              <div>
+                <p className="eyebrow">NEXORA EXPERIENCE</p>
+                <h1>{activeHub.title}</h1>
+                <p className="intro">{activeHub.desc}</p>
+              </div>
             </div>
 
             {activeHub.id === 'assistant' ? (
@@ -196,25 +282,131 @@ export default function App() {
                 <div className="assistant-main panel">
                   <p className="eyebrow">YOUR PERSONAL ACTIVITY GUIDE</p>
                   <h2>What are you in the mood for?</h2>
-                  <p className="panel-copy">Tell Nexora how you feel, how much time you have, or what you want to do. Your request is processed by the local AI on this computer.</p>
+                  <p className="panel-copy">
+                    Tell Nexora how you feel, how much time you have, or what
+                    you want to do. Your request is processed by Nexora's hosted
+                    AI service.
+                  </p>
+
                   <div className="mood-row" aria-label="Quick mood prompts">
-                    {MOODS.map((mood) => <button type="button" className="mood-chip" key={mood.label} data-tv-focus="true" onClick={() => usePrompt(mood.prompt)}>{mood.icon} {mood.label}</button>)}
+                    {MOODS.map((mood) => (
+                      <button
+                        type="button"
+                        className="mood-chip"
+                        key={mood.label}
+                        data-tv-focus="true"
+                        onClick={() => usePrompt(mood.prompt)}
+                      >
+                        {mood.icon} {mood.label}
+                      </button>
+                    ))}
                   </div>
+
                   <form className="ask-form" onSubmit={askAI}>
                     <label htmlFor="nexora-prompt">Your request</label>
                     <div className="input-row">
-                      <input id="nexora-prompt" data-prompt-input data-tv-focus="true" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="e.g. I want to relax for 10 minutes…" autoComplete="off" disabled={loading} />
-                      <button className="primary-button" type="submit" data-tv-focus="true" disabled={loading || !message.trim()}>{loading ? 'Thinking…' : 'Ask AI'} <span aria-hidden="true">→</span></button>
+                      <input
+                        id="nexora-prompt"
+                        data-prompt-input
+                        data-tv-focus="true"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="e.g. I want to relax for 10 minutes…"
+                        autoComplete="off"
+                        disabled={loading}
+                      />
+                      <button
+                        className="primary-button"
+                        type="submit"
+                        data-tv-focus="true"
+                        disabled={loading || !message.trim()}
+                      >
+                        {loading ? 'Thinking…' : 'Ask AI'}{' '}
+                        <span aria-hidden="true">→</span>
+                      </button>
                     </div>
                   </form>
-                  {loading && <div className="status panel-message" role="status"><span className="spinner" /> Gemma is thinking. The first response may take a little longer while the model loads.</div>}
-                  {error && <div className="error-message" role="alert"><strong>Couldn't reach Nexora AI</strong><p>{error}</p><button type="button" className="text-button" data-tv-focus="true" onClick={() => usePrompt(lastPrompt || message)}>Try again</button></div>}
-                  {reply && <div className="recommendation" aria-live="polite"><div className="recommendation-title"><span className="bot-icon">✦</span><div><p className="eyebrow">YOUR NEXT GOOD THING</p><h3>Nexora recommends</h3></div></div><p className="recommendation-text">{reply}</p><div className="recommendation-actions"><button type="button" data-tv-focus="true" className="secondary-button" onClick={() => { setMessage('Give me a different suggestion for: ' + lastPrompt); }}>Another idea ↻</button><button type="button" data-tv-focus="true" className="text-button" onClick={() => { setReply(''); setError(''); }}>Clear result</button></div></div>}
+
+                  {loading && (
+                    <div className="status panel-message" role="status">
+                      <span className="spinner" /> Nexora is preparing your
+                      suggestion. This may take a moment.
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="error-message" role="alert">
+                      <strong>Couldn't reach Nexora AI</strong>
+                      <p>{error}</p>
+                      <button
+                        type="button"
+                        className="text-button"
+                        data-tv-focus="true"
+                        onClick={() => usePrompt(lastPrompt || message)}
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+
+                  {reply && (
+                    <div className="recommendation" aria-live="polite">
+                      <div className="recommendation-title">
+                        <span className="bot-icon">✦</span>
+                        <div>
+                          <p className="eyebrow">YOUR NEXT GOOD THING</p>
+                          <h3>Nexora recommends</h3>
+                        </div>
+                      </div>
+                      <p className="recommendation-text">{reply}</p>
+                      <div className="recommendation-actions">
+                        <button
+                          type="button"
+                          data-tv-focus="true"
+                          className="secondary-button"
+                          onClick={() => {
+                            setMessage(
+                              'Give me a different suggestion for: ' + lastPrompt
+                            );
+                          }}
+                        >
+                          Another idea ↻
+                        </button>
+                        <button
+                          type="button"
+                          data-tv-focus="true"
+                          className="text-button"
+                          onClick={() => {
+                            setReply('');
+                            setError('');
+                          }}
+                        >
+                          Clear result
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
                 <aside className="assistant-aside panel">
-                  <div className="aside-orb">✦</div><p className="eyebrow">MADE FOR YOUR MOMENT</p><h3>Small activities. Better breaks.</h3>
-                  <ul className="benefit-list"><li>Suggestions matched to your mood</li><li>Short activities with clear steps</li><li>Four hubs, one helpful guide</li><li>Local AI via Ollama + Gemma</li></ul>
-                  <div className="privacy-note"><span>🔒</span><p><strong>Local-first AI</strong><br />Your prompt is sent to the local Nexora backend and Ollama model on this machine.</p></div>
+                  <div className="aside-orb">✦</div>
+                  <p className="eyebrow">MADE FOR YOUR MOMENT</p>
+                  <h3>Small activities. Better breaks.</h3>
+                  <ul className="benefit-list">
+                    <li>Suggestions matched to your mood</li>
+                    <li>Short activities with clear steps</li>
+                    <li>Four hubs, one helpful guide</li>
+                    <li>AI-powered activity ideas</li>
+                  </ul>
+                  <div className="privacy-note">
+                    <span>🔒</span>
+                    <p>
+                      <strong>Hosted AI service</strong>
+                      <br />
+                      Your prompt is sent to Nexora's backend for processing by
+                      the AI provider.
+                    </p>
+                  </div>
                 </aside>
               </div>
             ) : (
@@ -222,15 +414,37 @@ export default function App() {
                 <div className="placeholder-art">{activeHub.icon}</div>
                 <p className="eyebrow">YOUR NEXT GOOD THING</p>
                 <h2>Make this moment count.</h2>
-                <p className="panel-copy">Ask Nexora AI for a personalized {activeHub.title.toLowerCase()} activity based on your time and mood.</p>
-                <button type="button" className="primary-button" data-tv-focus="true" onClick={() => { setMessage(`Suggest one activity for ${activeHub.title}. Make it beginner-friendly and give me clear steps.`); openHub(HUBS[4]); }}>Get an AI suggestion <span aria-hidden="true">→</span></button>
+                <p className="panel-copy">
+                  Ask Nexora AI for a personalized{' '}
+                  {activeHub.title.toLowerCase()} activity based on your time
+                  and mood.
+                </p>
+                <button
+                  type="button"
+                  className="primary-button"
+                  data-tv-focus="true"
+                  onClick={() => {
+                    setMessage(
+                      `Suggest one activity for ${activeHub.title}. Make it beginner-friendly and give me clear steps.`
+                    );
+                    openHub(HUBS[4]);
+                  }}
+                >
+                  Get an AI suggestion <span aria-hidden="true">→</span>
+                </button>
               </div>
             )}
           </section>
         )}
       </main>
 
-      <footer className="footer"><span className="footer-brand">NEXORA <span>Fire TV</span></span><span>Learn · Relax · Connect · Grow</span><span>Open source · Local-first AI</span></footer>
+      <footer className="footer">
+        <span className="footer-brand">
+          NEXORA <span>Fire TV</span>
+        </span>
+        <span>Learn · Relax · Connect · Grow</span>
+        <span>AI-powered · Built for Fire TV</span>
+      </footer>
     </div>
   );
 }
