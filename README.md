@@ -1,27 +1,67 @@
-# NEXORA — Fire TV Edition
-**Amazon Developer Hackathon 2026 (Fire TV Track)**
+# NEXORA Fire TV
 
-> *"Make your screen time time well spent"*
+A TV-friendly activity discovery experience with five hubs and a local-first AI guide powered by Ollama and Gemma.
 
-## Overview
-NEXORA is a TV-first React and Vite application designed to turn passive screen time into enriching, mindful learning and family experiences. Built with optimized 1080p layouts, high-contrast components, and full remote-control compatibility.
+## Features
 
-## Key Features
-- **TV-Optimized Navigation:** Full keyboard/remote support for D-pad navigation (`ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`), `Enter` to select, and `Backspace`/`Esc` to return.
-- **High-Contrast Focus Rings:** Custom cyan glowing focus outlines (`tv-focusable`) designed for visibility from a distance on big screens.
-- **Interactive Hubs:**
-  - **Learning Hub:** Interactive trivia quizzes with instant score tracking and science facts.
-  - **Wellness Hub:** Guided breathing break timers, eye-rest prompts, and movement routines.
-  - **Family Hub:** Charades prompts, family trivia, and gratitude circles.
-  - **Daily Brain Challenge:** Engaging daily number puzzles.
+- Five hubs: Learning, Wellness, Family, Daily Brain, and Nexora AI.
+- Remote-friendly focus states and keyboard/D-pad navigation.
+- Quick prompts for relaxation, energy, creativity, and brain challenges.
+- Concise, structured activity recommendations from a local Gemma model.
+- Loading, validation, timeout, and connection-error states.
+- Local-first AI: prompts are sent to the local backend and Ollama service.
 
-## Technology Stack
-- **Framework:** React + Vite
-- **Styling:** Tailwind CSS & Custom CSS
-- **Platform Target:** Amazon Fire TV (Web App / Silk Browser / Web App Tester)
+## Requirements
 
-## Running Locally on Windows
-1. Open your project folder in terminal or PowerShell.
-2. Install dependencies:
-   ```bash
-   npm install
+- Node.js 20+ (a recent LTS version is recommended)
+- Ollama installed and running
+- A model downloaded locally, for example `gemma3:1b`
+
+## Run locally
+
+Open a terminal in the project folder:
+
+```bash
+npm install
+ollama pull gemma3:1b
+```
+
+Terminal 1 — start the AI backend:
+
+```bash
+node server.js
+```
+
+Terminal 2 — start the Vite frontend:
+
+```bash
+npm run dev
+```
+
+Open the local URL Vite prints (usually `http://localhost:5173`). Keep both terminals running while using local AI.
+
+Health check: open `http://127.0.0.1:3001/api/health`. This checks the backend process; the Ollama model is contacted when you submit a prompt.
+
+## Keyboard / remote controls
+
+- Arrow keys: move focus through visible interactive controls.
+- Enter / OK: activate the focused button or card.
+- Escape: return to the home screen.
+- Backspace: return home when focus is not in a text field.
+
+Navigation should be tested with the actual target TV/device as well as a desktop keyboard. Remote behavior varies by device/browser.
+
+## Architecture
+
+- Frontend: React + Vite
+- Backend: Node.js + Express
+- Local inference: Ollama HTTP API + Gemma
+- Frontend `/api` requests are proxied by Vite to the local Express server during development.
+
+## Important deployment note
+
+The local Ollama backend is for local development and demos. A static GitHub Pages deployment cannot call a visitor's `127.0.0.1` service. Do not expose your local Ollama server directly to the public internet. A public demo needs a separately hosted, secured backend or a documented local run mode.
+
+## Project status
+
+This project is under active development. Verify features in your environment before describing them as production-ready.
