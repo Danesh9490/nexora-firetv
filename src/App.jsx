@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import './App.css';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
-
 const HUBS = [
   { id: 'learning', title: 'Learning Hub', desc: 'Learn something new in minutes', icon: '🎓', color: 'blue' },
   { id: 'wellness', title: 'Wellness Hub', desc: 'Reset your mind and body', icon: '🧘', color: 'green' },
@@ -16,7 +15,7 @@ const MOODS = [
   { label: 'Relax', prompt: 'I want to relax for 10 minutes.', icon: '🌿' },
   { label: 'Get energized', prompt: 'Suggest an energetic activity I can do in 10 minutes.', icon: '⚡' },
   { label: 'Be creative', prompt: 'Give me a creative activity that needs no special supplies and takes 15 minutes.', icon: '🎨' },
-  { label: 'Brain challenge', prompt: 'Give me a fun brain challenge that takes 5 minutes. Include the challenge, but put the answer under a separate spoiler-style answer line.', icon: '🧩' },
+  { label: 'Brain challenge', prompt: 'Give me one fair, solvable brain challenge that takes 5 minutes. Show the challenge first and offer a hint. Do not reveal the answer unless I ask for it.', icon: '🧩' },
 ];
 
 const QUICK_IDEAS = [
@@ -172,7 +171,6 @@ export default function App() {
         >
           NEXORA <span>Fire TV</span>
         </a>
-
         <div className="topbar-right">
           <span className="live-dot" /> NEXORA AI
         </div>
@@ -358,7 +356,9 @@ export default function App() {
                           <h3>Nexora recommends</h3>
                         </div>
                       </div>
+
                       <p className="recommendation-text">{reply}</p>
+
                       <div className="recommendation-actions">
                         <button
                           type="button"
@@ -372,6 +372,7 @@ export default function App() {
                         >
                           Another idea ↻
                         </button>
+
                         <button
                           type="button"
                           data-tv-focus="true"
