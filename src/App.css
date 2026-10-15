@@ -1,45 +1,210 @@
 
-/* NEXORA premium blue-purple background */
+/* ==========================================
+   NEXORA STEP 2 — Aurora Background & Cards
+   ========================================== */
+
+:root {
+  --nx-text: #f5f7ff;
+  --nx-muted: #c4cde5;
+  --nx-blue: #78c9ff;
+  --nx-purple: #c6a7ff;
+  --nx-border: rgba(166, 190, 255, 0.25);
+}
+
 html {
   min-height: 100%;
-  background: #0b1020;
+  background-color: #090d1b;
 }
 
 body {
   min-height: 100vh;
-  margin: 0;
-  color: #f4f6ff;
+  color: var(--nx-text);
   background:
-    radial-gradient(ellipse at 10% 5%, rgba(40, 110, 255, 0.35), transparent 42%),
-    radial-gradient(ellipse at 90% 20%, rgba(155, 70, 255, 0.30), transparent 40%),
-    radial-gradient(ellipse at 50% 100%, rgba(0, 190, 190, 0.16), transparent 45%),
-    linear-gradient(135deg, #080c19, #141735 55%, #0b1020);
+    radial-gradient(
+      ellipse at 12% 8%,
+      rgba(44, 105, 255, 0.36),
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 90% 20%,
+      rgba(150, 70, 255, 0.29),
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 52% 100%,
+      rgba(0, 190, 190, 0.17),
+      transparent 44%
+    ),
+    linear-gradient(135deg, #080c19, #131831 55%, #0a1021);
   background-attachment: fixed;
 }
 
-/* Premium glass-style cards */
-.recommendation,
-.card,
-.hub-card,
-.quick-pick {
-  background: rgba(24, 32, 61, 0.82);
-  border: 1px solid rgba(160, 180, 255, 0.24);
+#root,
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-shell {
+  color: var(--nx-text);
+  background: transparent;
+}
+
+/* Hero heading */
+.hero-copy h1,
+.view-heading h1 {
+  color: var(--nx-text);
+  letter-spacing: -0.035em;
+}
+
+.hero-copy h1 span {
+  color: var(--nx-blue);
+}
+
+.eyebrow {
+  color: var(--nx-blue);
+  letter-spacing: 0.12em;
+}
+
+.intro,
+.section-heading > p,
+.hub-desc,
+.quick-meta,
+.panel-copy {
+  color: var(--nx-muted);
+}
+
+/* Main hub cards */
+.hub-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    145deg,
+    rgba(36, 48, 87, 0.92),
+    rgba(17, 23, 46, 0.94)
+  );
+  border: 1px solid var(--nx-border);
   border-radius: 20px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-/* Clear text */
-h1, h2, h3, h4 {
-  color: #f4f6ff;
+.hub-card:hover,
+.hub-card.selected,
+.hub-card:focus-visible {
+  border-color: var(--nx-blue);
+  box-shadow:
+    0 0 0 2px rgba(120, 201, 255, 0.2),
+    0 16px 36px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
 }
 
-p, label {
-  color: #cbd5e8;
+.hub-title,
+.quick-title {
+  color: var(--nx-text);
 }
 
-/* Highlight interactive elements */
+.hub-icon,
+.quick-icon {
+  filter: drop-shadow(0 4px 12px rgba(120, 150, 255, 0.2));
+}
+
+/* Quick-pick cards */
+.quick-card {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 41, 75, 0.92),
+    rgba(16, 22, 44, 0.96)
+  );
+  border: 1px solid var(--nx-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.quick-card:hover,
+.quick-card:focus-visible {
+  border-color: var(--nx-purple);
+  box-shadow: 0 0 0 2px rgba(198, 167, 255, 0.18);
+  transform: translateY(-3px);
+}
+
+.card-open,
+.quick-arrow {
+  color: var(--nx-blue);
+}
+
+/* AI panels and recommendation */
+.panel,
+.recommendation,
+.hub-placeholder {
+  background: linear-gradient(
+    145deg,
+    rgba(31, 42, 76, 0.92),
+    rgba(15, 21, 43, 0.95)
+  );
+  border: 1px solid var(--nx-border);
+  border-radius: 22px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+}
+
+.recommendation-text {
+  color: var(--nx-text);
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mood-chip,
+.secondary-button {
+  border-color: var(--nx-border);
+}
+
+.primary-button {
+  box-shadow: 0 6px 20px rgba(80, 110, 255, 0.2);
+}
+
+/* Footer */
+.footer {
+  color: var(--nx-muted);
+}
+
+.footer-brand {
+  color: var(--nx-text);
+}
+
+/* Keyboard and remote focus */
 button:focus-visible,
-a:focus-visible {
-  outline: 3px solid #7dd3fc;
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--nx-blue);
   outline-offset: 4px;
+}
+
+/* Comfortable text on large TV displays */
+@media (min-width: 1200px) {
+  .hub-card,
+  .quick-card {
+    border-radius: 22px;
+  }
+
+  .hub-desc,
+  .quick-meta {
+    line-height: 1.7;
+  }
+}
+
+/* Respect reduced-motion settings */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
