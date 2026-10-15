@@ -1,122 +1,111 @@
 🚀 NEXORA Fire TV
 
-An AI-powered activity discovery experience designed for Amazon Fire TV.
+An AI-powered, TV-friendly activity discovery experience.
 
-NEXORA helps users discover activities for learning, wellness, family time, and brain training through a TV-friendly interface and AI assistant.
-
-🌐 Live Demo
-
-Try the app: https://nexora-firetv.vercel.app/
+"🌐 Live Demo" (https://nexora-firetv.vercel.app/) · "🐛 Report a Bug" (https://github.com/Danesh9490/nexora-firetv/issues) · "💻 Source Code" (https://github.com/Danesh9490/nexora-firetv)
 
 ✨ Features
 
-- 📚 Learning: Discover educational activities.
-- 🌿 Wellness: Explore relaxation and wellbeing ideas.
-- 👨‍👩‍👧‍👦 Family: Find activities for quality family time.
-- 🧠 Daily Brain: Try puzzles and brain-training challenges.
-- 🤖 Nexora AI: Get AI-generated activity recommendations.
-- 🎮 TV-friendly navigation: Keyboard and directional controls.
-- ⚡ Quick prompts: Explore creativity, relaxation, energy, and brain challenges.
-- 🛡️ Error handling: Loading, validation, timeout, and connection-error states.
+- 🎓 Learning Hub — Discover educational activities.
+- 🌿 Wellness Hub — Find relaxation and wellbeing ideas.
+- 👨‍👩‍👧 Family Hub — Explore activities for family time.
+- 🧠 Daily Brain — Try puzzles and brain challenges.
+- 🤖 NEXORA AI — Get personalized activity recommendations.
+- 🎮 TV-friendly navigation — Keyboard and directional controls.
+- 📱 Responsive interface — Use the app on supported mobile and desktop browsers.
+- ⚡ Helpful feedback — Loading, validation, and error states.
 
-🎯 Project Vision
+🛠️ Technology Stack
 
-NEXORA explores how AI can make activity discovery more engaging and accessible on a big screen.
-
-This project is being developed for the Amazon Developer Hackathon 2026 — Fire TV track.
-
-🧰 Technology Stack
-
-- Frontend: React
-- Build tool: Vite
+- Frontend: React and Vite
 - Backend: Node.js and Express
-- AI integration: Groq API
-- Continuous integration: GitHub Actions
+- AI provider: Groq API
 - Frontend hosting: Vercel
-
-💻 Run Locally
-
-Requirements
-
-- Node.js 22 or a compatible version
-- npm
-
-Installation
-
-Clone the repository:
-
-git clone https://github.com/Danesh9490/nexora-firetv.git
-
-Open the project directory:
-
-cd nexora-firetv
-
-Install dependencies:
-
-npm ci
-
-Start the frontend:
-
-npm run dev
-
-Open the local URL printed by Vite.
-
-Note: The frontend alone does not start the AI backend. Configure and start the backend separately to use AI features locally.
-
-🎮 Keyboard and Remote Controls
-
-Key| Action
-Arrow keys| Move focus
-Enter / OK| Activate the focused element
-Escape| Return to the home screen
-Backspace| Return home when not editing text
-
-Remote behavior can vary across browsers and Fire TV devices. Test on your target device.
+- Backend hosting: Render
+- Automation: GitHub Actions
 
 🏗️ Architecture
 
-User
-  |
-  v
-React + Vite Frontend
-  |
-  v
-Node.js + Express Backend
-  |
-  v
-Groq AI API
-  |
-  v
-Activity Recommendations
+1. The user selects a hub or enters a request.
+2. The frontend sends the request to the Express backend.
+3. The backend securely calls the Groq API.
+4. NEXORA displays the generated activity.
 
-🔐 Security
+🚀 Live Demo
 
-- Keep API keys on the backend.
-- Store secrets in environment variables or your hosting provider's secret settings.
-- Never commit API keys or passwords to GitHub.
+Try NEXORA: https://nexora-firetv.vercel.app/
 
-⚙️ Continuous Integration
+The backend is hosted separately. Its availability may vary because the hosting provider's free service can sleep when inactive.
 
-GitHub Actions checks the application build when changes are pushed to "main" or a pull request targets "main".
+🔐 Environment Variables
 
-"View workflow runs" (https://github.com/Danesh9490/nexora-firetv/actions)
+Configure these in your hosting provider's environment-variable settings.
+
+Backend on Render
+
+- "GROQ_API_KEY" — Your private Groq API key.
+- "GROQ_MODEL" — Optional model override.
+
+Frontend on Vercel
+
+- "VITE_API_BASE_URL" — The base URL of your deployed backend.
+
+Never commit API keys, passwords, or other secrets to GitHub.
+
+💻 Local Development
+
+Requirements:
+
+- Node.js and npm
+- A Groq API key
+- The project dependencies installed
+
+1. Clone the repository:
+   
+   git clone https://github.com/Danesh9490/nexora-firetv.git
+cd nexora-firetv
+
+2. Install the project dependencies:
+   
+   npm install
+
+3. Configure the required backend environment variables and start the backend according to the project's server configuration.
+
+4. In a separate terminal, start the Vite development server:
+   
+   npm run dev
+
+Follow the terminal output to open the local development URL.
+
+🧭 Remote Navigation
+
+- Arrow keys: Move focus.
+- Enter / OK: Activate the selected control.
+- Escape: Return to the home screen.
+
+Actual Fire TV compatibility should be tested on the intended device.
+
+🤝 Contributing
+
+Contributions, bug reports, and feature suggestions are welcome!
+
+1. Explore the existing issues.
+2. Describe the change you want to make.
+3. Submit a pull request with a clear explanation of your changes.
+
+Please test your changes before submitting them.
 
 🗺️ Roadmap
 
-- [ ] Improve AI response formatting and activity quality.
-- [ ] Test navigation on a physical Fire TV device.
-- [ ] Add screenshots and a demonstration video.
-- [ ] Expand automated quality checks.
-- [ ] Improve accessibility and TV usability.
-
-🤝 Feedback and Contributions
-
-Have a suggestion or found a bug? "Open a GitHub issue" (https://github.com/Danesh9490/nexora-firetv/issues).
+- Improve accessibility and TV remote navigation.
+- Expand automated tests.
+- Add screenshots and a demonstration video.
+- Improve activity recommendations and error handling.
 
 📄 License
 
-This project is licensed under the "MIT License" (LICENSE).
+This project is licensed under the MIT License. See "LICENSE" (LICENSE).
 
 ---
 
-Built for a smarter TV activity experience.
+Built to make discovering your next good activity simple.
