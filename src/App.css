@@ -1,31 +1,139 @@
 
-/* Clearer AI recommendations for TV screens */
+/* =====================================
+   NEXORA — Premium Aurora Background
+   ===================================== */
+
+:root {
+  --nexora-bg: #090d1b;
+  --nexora-card: rgba(22, 29, 54, 0.78);
+  --nexora-border: rgba(160, 180, 255, 0.2);
+  --nexora-text: #f4f6ff;
+  --nexora-muted: #c0c9e2;
+  --nexora-blue: #7dd3fc;
+  --nexora-purple: #c4b5fd;
+}
+
+html {
+  min-height: 100%;
+  background: var(--nexora-bg);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--nexora-text);
+  background:
+    radial-gradient(
+      ellipse at 12% 8%,
+      rgba(43, 102, 220, 0.32),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 88% 22%,
+      rgba(137, 72, 220, 0.28),
+      transparent 35%
+    ),
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(15, 155, 180, 0.15),
+      transparent 42%
+    ),
+    linear-gradient(135deg, #090d1b, #10132b 55%, #0b1020);
+  background-attachment: fixed;
+}
+
+/* Main page surfaces */
+main,
+section {
+  color: var(--nexora-text);
+}
+
+/* Glass-style cards */
+.recommendation,
+.card,
+.hub-card,
+.quick-pick,
+[class*="hub-card"],
+[class*="quick-pick"] {
+  border-color: var(--nexora-border);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+}
+
+/* AI recommendation panel */
 .recommendation {
   padding: 28px;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--nexora-border);
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    rgba(32, 43, 78, 0.88),
+    rgba(19, 24, 48, 0.9)
+  );
+  backdrop-filter: blur(14px);
 }
 
 .recommendation-title h3 {
+  color: var(--nexora-purple);
   font-size: 1.5rem;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .recommendation-text {
+  color: var(--nexora-text);
   font-size: 1.1rem;
   line-height: 1.9;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.recommendation-actions button {
-  min-height: 44px;
-  padding: 12px 16px;
+/* Text readability */
+p,
+label {
+  color: var(--nexora-muted);
 }
 
+h1,
+h2,
+h3,
+h4 {
+  color: var(--nexora-text);
+}
+
+/* Buttons */
+button {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+button:hover,
+button:focus-visible {
+  border-color: var(--nexora-blue);
+  box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.2);
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--nexora-blue);
+  outline-offset: 4px;
+}
+
+/* Larger text for TV screens */
 @media (min-width: 1200px) {
   .recommendation-text {
-    font-size: 1.2rem;
     max-width: 900px;
+    font-size: 1.2rem;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
