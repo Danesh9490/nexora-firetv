@@ -1,0 +1,27 @@
+
+{
+  "id": "/",
+  "name": "NEXORA AI Activity Hub",
+  "short_name": "NEXORA",
+  "description": "Your AI-powered hub for learning, wellness, family activities, and brain challenges.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#151b46",
+  "theme_color": "#151b46",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/nexora.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/nexora.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
