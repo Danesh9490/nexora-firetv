@@ -1,67 +1,122 @@
-# NEXORA Fire TV
+🚀 NEXORA Fire TV
 
-A TV-friendly activity discovery experience with five hubs and a local-first AI guide powered by Ollama and Gemma.
+An AI-powered activity discovery experience designed for Amazon Fire TV.
 
-## Features
+NEXORA helps users discover activities for learning, wellness, family time, and brain training through a TV-friendly interface and AI assistant.
 
-- Five hubs: Learning, Wellness, Family, Daily Brain, and Nexora AI.
-- Remote-friendly focus states and keyboard/D-pad navigation.
-- Quick prompts for relaxation, energy, creativity, and brain challenges.
-- Concise, structured activity recommendations from a local Gemma model.
-- Loading, validation, timeout, and connection-error states.
-- Local-first AI: prompts are sent to the local backend and Ollama service.
+🌐 Live Demo
 
-## Requirements
+Try the app: https://nexora-firetv.vercel.app/
 
-- Node.js 20+ (a recent LTS version is recommended)
-- Ollama installed and running
-- A model downloaded locally, for example `gemma3:1b`
+✨ Features
 
-## Run locally
+- 📚 Learning: Discover educational activities.
+- 🌿 Wellness: Explore relaxation and wellbeing ideas.
+- 👨‍👩‍👧‍👦 Family: Find activities for quality family time.
+- 🧠 Daily Brain: Try puzzles and brain-training challenges.
+- 🤖 Nexora AI: Get AI-generated activity recommendations.
+- 🎮 TV-friendly navigation: Keyboard and directional controls.
+- ⚡ Quick prompts: Explore creativity, relaxation, energy, and brain challenges.
+- 🛡️ Error handling: Loading, validation, timeout, and connection-error states.
 
-Open a terminal in the project folder:
+🎯 Project Vision
 
-```bash
-npm install
-ollama pull gemma3:1b
-```
+NEXORA explores how AI can make activity discovery more engaging and accessible on a big screen.
 
-Terminal 1 — start the AI backend:
+This project is being developed for the Amazon Developer Hackathon 2026 — Fire TV track.
 
-```bash
-node server.js
-```
+🧰 Technology Stack
 
-Terminal 2 — start the Vite frontend:
+- Frontend: React
+- Build tool: Vite
+- Backend: Node.js and Express
+- AI integration: Groq API
+- Continuous integration: GitHub Actions
+- Frontend hosting: Vercel
 
-```bash
+💻 Run Locally
+
+Requirements
+
+- Node.js 22 or a compatible version
+- npm
+
+Installation
+
+Clone the repository:
+
+git clone https://github.com/Danesh9490/nexora-firetv.git
+
+Open the project directory:
+
+cd nexora-firetv
+
+Install dependencies:
+
+npm ci
+
+Start the frontend:
+
 npm run dev
-```
 
-Open the local URL Vite prints (usually `http://localhost:5173`). Keep both terminals running while using local AI.
+Open the local URL printed by Vite.
 
-Health check: open `http://127.0.0.1:3001/api/health`. This checks the backend process; the Ollama model is contacted when you submit a prompt.
+Note: The frontend alone does not start the AI backend. Configure and start the backend separately to use AI features locally.
 
-## Keyboard / remote controls
+🎮 Keyboard and Remote Controls
 
-- Arrow keys: move focus through visible interactive controls.
-- Enter / OK: activate the focused button or card.
-- Escape: return to the home screen.
-- Backspace: return home when focus is not in a text field.
+Key| Action
+Arrow keys| Move focus
+Enter / OK| Activate the focused element
+Escape| Return to the home screen
+Backspace| Return home when not editing text
 
-Navigation should be tested with the actual target TV/device as well as a desktop keyboard. Remote behavior varies by device/browser.
+Remote behavior can vary across browsers and Fire TV devices. Test on your target device.
 
-## Architecture
+🏗️ Architecture
 
-- Frontend: React + Vite
-- Backend: Node.js + Express
-- Local inference: Ollama HTTP API + Gemma
-- Frontend `/api` requests are proxied by Vite to the local Express server during development.
+User
+  |
+  v
+React + Vite Frontend
+  |
+  v
+Node.js + Express Backend
+  |
+  v
+Groq AI API
+  |
+  v
+Activity Recommendations
 
-## Important deployment note
+🔐 Security
 
-The local Ollama backend is for local development and demos. A static GitHub Pages deployment cannot call a visitor's `127.0.0.1` service. Do not expose your local Ollama server directly to the public internet. A public demo needs a separately hosted, secured backend or a documented local run mode.
+- Keep API keys on the backend.
+- Store secrets in environment variables or your hosting provider's secret settings.
+- Never commit API keys or passwords to GitHub.
 
-## Project status
+⚙️ Continuous Integration
 
-This project is under active development. Verify features in your environment before describing them as production-ready.
+GitHub Actions checks the application build when changes are pushed to "main" or a pull request targets "main".
+
+"View workflow runs" (https://github.com/Danesh9490/nexora-firetv/actions)
+
+🗺️ Roadmap
+
+- [ ] Improve AI response formatting and activity quality.
+- [ ] Test navigation on a physical Fire TV device.
+- [ ] Add screenshots and a demonstration video.
+- [ ] Expand automated quality checks.
+- [ ] Improve accessibility and TV usability.
+
+🤝 Feedback and Contributions
+
+Have a suggestion or found a bug? "Open a GitHub issue" (https://github.com/Danesh9490/nexora-firetv/issues).
+
+📄 License
+
+This project is licensed under the "MIT License" (LICENSE).
+
+---
+
+Built for a smarter TV activity experience.
