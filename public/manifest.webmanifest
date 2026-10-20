@@ -1,0 +1,19 @@
+
+{
+  "name": "NEXORA Fire TV",
+  "short_name": "NEXORA",
+  "description": "AI-powered activity discovery experience",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080b24",
+  "theme_color": "#00d9ff",
+  "icons": [
+    {
+      "src": "/Nexora.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
