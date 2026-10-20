@@ -1,700 +1,262 @@
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import './App.css';
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(
-  /\/$/,
-  ''
+const app = express();
+const PORT = process.env.PORT || 10000;
+const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://nexora-firetv.vercel.app',
+      process.env.FRONTEND_ORIGIN,
+    ].filter(Boolean),
+  })
 );
 
-const HUBS = [
-  {
-    id: 'learning',
-    title: 'Learning Hub',
-    desc: 'Learn something new in minutes',
-    icon: '🎓',
-    color: 'blue',
-    prompt:
-      'Teach me one fascinating topic in a beginner-friendly 10-minute mini lesson. Include a surprising fact, a simple explanation, an everyday example, and three quiz questions. Show the questions before the answers.',
-  },
-  {
-    id: 'wellness',
-    title: 'Wellness Hub',
-    desc: 'Reset your mind and body',
-    icon: '🧘',
-    color: 'green',
-    prompt:
-      'Guide me through a gentle 5 to 10-minute wellness activity. Give clear steps for relaxing, mindful breathing, or gentle movement. Include a seated alternative and remind me to stop if I feel uncomfortable. Do not make medical claims.',
-  },
-  {
-    id: 'family',
-    title: 'Family Hub',
-    desc: 'Make time together count',
-    icon: '👨‍👩‍👧‍👦',
-    color: 'purple',
-    prompt:
-      'Suggest one fun, inclusive 15-minute family activity that needs little or no equipment. Explain the setup, rules, and how everyone can participate. Keep it family-friendly for different ages.',
-  },
-  {
-    id: 'brain',
-    title: 'Daily Brain',
-    desc: 'Puzzles, memory and curiosity',
-    icon: '🧠',
-    color: 'orange',
-    prompt:
-      'Give me one fair, solvable brain teaser or memory challenge that takes about 5 minutes. Present the challenge first and offer an optional hint. Do not reveal the answer unless I ask.',
-  },
-  {
-    id: 'assistant',
-    title: 'Nexora AI',
-    desc: 'Your personal activity guide',
-    icon: '🤖',
-    color: 'cyan',
-    prompt: '',
-  },
-];
+app.use(express.json({ limit: '20kb' }));
 
-const MOODS = [
-  {
-    label: 'Relax',
-    prompt: 'Suggest a calming activity I can do in 10 minutes.',
-    icon: '🌿',
-  },
-  {
-    label: 'Get energized',
-    prompt: 'Suggest an energizing activity I can do in 10 minutes.',
-    icon: '⚡',
-  },
-  {
-    label: 'Be creative',
-    prompt:
-      'Give me a creative activity that needs no special supplies and takes 15 minutes.',
-    icon: '🎨',
-  },
-  {
-    label: 'Brain challenge',
-    prompt:
-      'Give me one fair, solvable 5-minute brain challenge. Show the challenge first and offer a hint without revealing the answer.',
-    icon: '🧩',
-  },
-];
+const SYSTEM_PROMPT = `You are Nexora, a friendly, family-friendly activity guide.
 
-const QUICK_IDEAS = [
-  {
-    title: 'Relax & Reset',
-    hub: 'Wellness Hub',
-    hubId: 'wellness',
-    time: '10 min',
-    icon: '🌿',
-    prompt: 'Suggest a calming 10-minute wellness activity.',
-  },
-  {
-    title: 'Family Fun',
-    hub: 'Family Hub',
-    hubId: 'family',
-    time: '15 min',
-    icon: '🎲',
-    prompt:
-      'Suggest a fun 15-minute activity for a family with no special equipment.',
-  },
-  {
-    title: 'Brain Boost',
-    hub: 'Daily Brain',
-    hubId: 'brain',
-    time: '5 min',
-    icon: '🧠',
-    prompt:
-      'Give me one enjoyable 5-minute brain challenge. Let me try before showing the answer.',
-  },
-  {
-    title: 'Learn Something',
-    hub: 'Learning Hub',
-    hubId: 'learning',
-    time: '10 min',
-    icon: '✨',
-    prompt:
-      'Teach me one surprising thing in a simple 10-minute mini lesson.',
-  },
-];
+Recommend one practical activity matching the user's request, mood,
+interests, and available time.
 
-// Render AI text as React elements, never as HTML.
-// Supports bold text, headings, numbered lists and bullet lists.
-function renderInline(text, keyPrefix) {
-  const cleaned = text.replace(/\\([*_#])/g, '$1');
-  const parts = cleaned.split(/(\*\*.*?\*\*)/g);
+Use this plain-text format:
+ACTIVITY: Clear activity title
+HUB: Learning Hub, Wellness Hub, Family Hub, or Daily Brain
+TIME: Realistic duration
+WHY IT FITS: One specific sentence
+STEPS:
+1. First action
+2. Second action
+3. Third action if useful
+HINT: Include only when useful for a puzzle
 
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <strong key={`${keyPrefix}-${index}`}>
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
+Keep answers concise, clear, warm, safe, and easy to read on a television.
+Use plain text and normal line breaks. Never output HTML or code fences.
+Do not return an empty answer.`;
 
-    return part;
+const PLANNER_ACTIONS = ['create', 'revise'];
+
+async function callGroq(systemPrompt, userMessage, temperature = 0.5) {
+  if (!process.env.GROQ_API_KEY) {
+    const error = new Error(
+      'GROQ_API_KEY is missing from backend settings.'
+    );
+    error.status = 500;
+    throw error;
+  }
+
+  const response = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      max_completion_tokens: 1024,
+      temperature,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(45000),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    console.error(
+      'Groq error:',
+      response.status,
+      data.error?.message || 'Unknown provider error'
+    );
+
+    const error = new Error(
+      response.status === 429
+        ? 'The AI service is busy or its usage limit was reached.'
+        : 'The AI provider could not complete your request.'
+    );
+    error.status = 502;
+    throw error;
+  }
+
+  const reply = data.choices?.[0]?.message?.content;
+
+  if (typeof reply !== 'string' || !reply.trim()) {
+    const error = new Error('The AI provider returned an empty answer.');
+    error.status = 502;
+    throw error;
+  }
+
+  return reply.trim();
+}
+
+function handleApiError(error, res, label) {
+  console.error(`${label}:`, error.message);
+
+  if (error.status) {
+    return res.status(error.status).json({ error: error.message });
+  }
+
+  if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+    return res.status(504).json({
+      error: 'The AI request timed out. Please try again.',
+    });
+  }
+
+  return res.status(502).json({
+    error: 'Could not connect to the AI provider. Please try again.',
   });
 }
 
-function FormattedReply({ text }) {
-  const lines = String(text || '')
-    .replace(/\r\n?/g, '\n')
-    .trim()
-    .split('\n');
+app.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'Nexora AI' });
+});
 
-  const blocks = [];
-  let index = 0;
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'Nexora AI',
+    plannerAvailable: true,
+  });
+});
 
-  while (index < lines.length) {
-    const line = lines[index].trim();
+// Existing Nexora AI endpoint — retained for the current frontend.
+app.post('/api/assistant', async (req, res) => {
+  const message =
+    typeof req.body?.message === 'string'
+      ? req.body.message.trim()
+      : '';
 
-    if (!line) {
-      index += 1;
-      continue;
-    }
-
-    const numbered = line.match(/^\s*(\d+)[.)]\s+(.*)$/);
-    const bullet = line.match(/^\s*[-•*]\s+(.*)$/);
-
-    if (numbered) {
-      const items = [];
-
-      while (index < lines.length) {
-        const match = lines[index]
-          .trim()
-          .match(/^(\d+)[.)]\s+(.*)$/);
-
-        if (!match) break;
-
-        items.push({
-          number: match[1],
-          text: match[2],
-        });
-        index += 1;
-      }
-
-      blocks.push(
-        <ol key={`ol-${index}`}>
-          {items.map((item, itemIndex) => (
-            <li key={`li-${index}-${itemIndex}`}>
-              {renderInline(item.text, `ordered-${index}-${itemIndex}`)}
-            </li>
-          ))}
-        </ol>
-      );
-      continue;
-    }
-
-    if (bullet) {
-      const items = [];
-
-      while (index < lines.length) {
-        const match = lines[index]
-          .trim()
-          .match(/^[-•*]\s+(.*)$/);
-
-        if (!match) break;
-
-        items.push(match[1]);
-        index += 1;
-      }
-
-      blocks.push(
-        <ul key={`ul-${index}`}>
-          {items.map((item, itemIndex) => (
-            <li key={`bullet-${index}-${itemIndex}`}>
-              {renderInline(item, `bullet-${index}-${itemIndex}`)}
-            </li>
-          ))}
-        </ul>
-      );
-      continue;
-    }
-
-    const heading = line.match(/^#{1,4}\s+(.*)$/);
-    const content = heading ? heading[1] : line;
-
-    blocks.push(
-      <p key={`p-${index}`}>
-        {renderInline(content, `paragraph-${index}`)}
-      </p>
-    );
-
-    index += 1;
+  if (!message) {
+    return res.status(400).json({
+      error: 'Please enter a message.',
+    });
   }
 
-  return <div className="recommendation-text">{blocks}</div>;
+  try {
+    const reply = await callGroq(SYSTEM_PROMPT, message, 0.7);
+    return res.json({ reply });
+  } catch (error) {
+    return handleApiError(error, res, 'AI request failed');
+  }
+});
+
+// Activity planner — supports creating and revising a plan.
+app.post('/api/planner', async (req, res) => {
+  const message =
+    typeof req.body?.message === 'string'
+      ? req.body.message.trim()
+      : '';
+
+  const action = req.body?.action;
+
+  const currentPlan =
+    typeof req.body?.currentPlan === 'string'
+      ? req.body.currentPlan.trim()
+      : '';
+
+  if (!message) {
+    return res.status(400).json({
+      error: 'Please describe the activity you want to plan.',
+    });
+  }
+
+  if (message.length > 4000) {
+    return res.status(400).json({
+      error: 'Please keep your request under 4,000 characters.',
+    });
+  }
+
+  if (!PLANNER_ACTIONS.includes(action)) {
+    return res.status(400).json({
+      error: 'Choose a valid planner action: create or revise.',
+    });
+  }
+
+  if (action === 'revise' && !currentPlan) {
+    return res.status(400).json({
+      error: 'Create an activity plan before revising it.',
+    });
+  }
+
+  if (currentPlan.length > 8000) {
+    return res.status(400).json({
+      error: 'The current plan is too long to revise.',
+    });
+  }
+
+  const plannerPrompt = `You are Nexora Activity Planner, an assistant that creates and revises practical activity plans.
+
+WORKFLOW ACTION: ${action}
+
+${
+  action === 'revise'
+    ? `CURRENT PLAN:
+${currentPlan}
+
+Revise the current plan according to the user's new request. Preserve useful details unless asked to change them. Do not simply generate an unrelated new plan.`
+    : 'Create a new activity plan based on the user request.'
 }
 
-export default function App() {
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const [activeHub, setActiveHub] = useState(null);
-  const [message, setMessage] = useState('');
-  const [reply, setReply] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [lastPrompt, setLastPrompt] = useState('');
+If essential details are missing, ask one concise clarifying question instead of inventing personal preferences.
 
-  const mainRef = useRef(null);
-  const requestId = useRef(0);
+If enough information is available, respond in this exact plain-text structure:
 
-  const openHub = useCallback((hub, initialPrompt = '') => {
-    requestId.current += 1;
-    setActiveHub(hub);
-    setReply('');
-    setError('');
-    setLoading(false);
-    setMessage(initialPrompt);
-  }, []);
+STATUS: PLAN
+ACTIVITY: Clear activity title
+DURATION: Realistic duration
+MATERIALS: Required items, or None
+STEPS:
+1. First step
+2. Second step
+3. Additional steps if useful
+NEXT ACTION: One useful optional improvement or continuation
 
-  const goHome = useCallback(() => {
-    requestId.current += 1;
-    setActiveHub(null);
-    setReply('');
-    setError('');
-    setLoading(false);
-    setMessage('');
-  }, []);
+If you need clarification, respond in this structure:
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      const target = event.target;
+STATUS: QUESTION
+QUESTION: One specific, concise question
 
-      const isTyping =
-        target instanceof HTMLElement &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable);
+Keep activities practical, safe, family-friendly, and easy to follow.
+Do not claim to have performed real-world actions.
+Do not output HTML, Markdown tables, or code fences.`;
 
-      if (
-        event.key === 'Escape' ||
-        (event.key === 'Backspace' && !isTyping)
-      ) {
-        if (activeHub) {
-          event.preventDefault();
-          goHome();
-        }
-        return;
-      }
+  try {
+    const reply = await callGroq(plannerPrompt, message, 0.4);
 
-      if (
-        isTyping ||
-        !['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(
-          event.key
-        )
-      ) {
-        return;
-      }
+    // Return the updated plan to the client. The client must retain this
+    // response as currentPlan when the user requests a later revision.
+    return res.json({
+      action,
+      reply,
+      currentPlan: reply,
+    });
+  } catch (error) {
+    return handleApiError(error, res, 'Planner request failed');
+  }
+});
 
-      const items = Array.from(
-        document.querySelectorAll(
-          '[data-tv-focus="true"]:not(:disabled)'
-        )
-      ).filter((element) => element.getClientRects().length > 0);
-
-      if (!items.length) return;
-
-      const current = items.indexOf(document.activeElement);
-      let next = current < 0 ? 0 : current;
-
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-        next = (next + 1) % items.length;
-      } else {
-        next = (next - 1 + items.length) % items.length;
-      }
-
-      event.preventDefault();
-      items[next].focus();
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeHub, goHome]);
-
-  useEffect(() => {
-    if (!activeHub) {
-      const cards = mainRef.current?.querySelectorAll('[data-hub-card]');
-      cards?.[focusedIndex]?.focus();
-    } else {
-      mainRef.current?.querySelector('[data-back-button]')?.focus();
-    }
-  }, [activeHub, focusedIndex]);
-
-  async function askAI(event) {
-    event.preventDefault();
-
-    const cleanMessage = message.trim();
-
-    if (!cleanMessage || loading || !activeHub) return;
-
-    const thisRequest = ++requestId.current;
-    const selectedHub = activeHub;
-
-    const hubInstructions = {
-      learning:
-        'Give a learning lesson or educational activity only. Do not substitute a wellness exercise, family game, or unrelated activity.',
-      wellness:
-        'Give a gentle wellness, relaxation, breathing, or movement activity only. Avoid medical claims.',
-      family:
-        'Give an inclusive, family-friendly group activity only.',
-      brain:
-        'Give a brain teaser, puzzle, memory game, or curiosity challenge only.',
-      assistant:
-        'Choose the most suitable activity based on the user request.',
-    };
-
-    const fullPrompt = [
-      `You are Nexora AI inside the ${selectedHub.title}.`,
-      hubInstructions[selectedHub.id] || '',
-      'Respond in readable plain text or Markdown.',
-      'Use clear headings, short paragraphs, and numbered steps when useful.',
-      'Do not include literal backslashes before Markdown symbols.',
-      `User request: ${cleanMessage}`,
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-
-    setLastPrompt(cleanMessage);
-    setLoading(true);
-    setReply('');
-    setError('');
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/assistant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: fullPrompt,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || 'The AI request failed.');
-      }
-
-      if (thisRequest === requestId.current) {
-        setReply(
-          typeof data.reply === 'string' && data.reply.trim()
-            ? data.reply
-            : 'I could not create a suggestion. Please try another prompt.'
-        );
-      }
-    } catch (err) {
-      if (thisRequest === requestId.current) {
-        setError(
-          err.message ||
-            'Could not connect to Nexora AI. Please check the backend configuration.'
-        );
-      }
-    } finally {
-      if (thisRequest === requestId.current) {
-        setLoading(false);
-      }
-    }
+// Handle malformed JSON requests.
+app.use((error, _req, res, next) => {
+  if (error instanceof SyntaxError && 'body' in error) {
+    return res.status(400).json({
+      error: 'Invalid JSON request body.',
+    });
   }
 
-  function usePrompt(prompt) {
-    setMessage(prompt);
-    setError('');
-    document.querySelector('[data-prompt-input]')?.focus();
-  }
+  return next(error);
+});
 
-  function openHubWithPrompt(hubId, prompt) {
-    const hub = HUBS.find((item) => item.id === hubId) || HUBS[4];
-    openHub(hub, prompt);
-  }
-
-  function askForAnotherIdea() {
-    setMessage(
-      `Give me a different suggestion. My previous request was: ${lastPrompt}`
-    );
-    setReply('');
-    setError('');
-  }
-
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <a
-          className="brand"
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-            goHome();
-          }}
-          aria-label="Nexora Fire TV home"
-        >
-          NEXORA <span>Fire TV</span>
-        </a>
-
-        <div className="topbar-right">
-          <span className="live-dot" /> NEXORA AI
-        </div>
-      </header>
-
-      <main ref={mainRef}>
-        {!activeHub ? (
-          <>
-            <section className="hero-copy">
-              <p className="eyebrow">YOUR TIME, WELL SPENT</p>
-
-              <h1>
-                A smarter way to <span>spend your screen time.</span>
-              </h1>
-
-              <p className="intro">
-                Learn, reset, connect, and keep your mind sharp with a
-                colorful experience for your whole room.
-              </p>
-
-              <p className="remote-tip">
-                <span>← ↑ ↓ →</span> Navigate{' '}
-                <span>OK / ENTER</span> Select <span>ESC</span> Back
-              </p>
-            </section>
-
-            <section className="hub-grid" aria-label="Nexora hubs">
-              {HUBS.map((hub, index) => (
-                <button
-                  className={`hub-card ${hub.color} ${
-                    focusedIndex === index ? 'selected' : ''
-                  }`}
-                  key={hub.id}
-                  type="button"
-                  data-tv-focus="true"
-                  data-hub-card
-                  onFocus={() => setFocusedIndex(index)}
-                  onClick={() => openHub(hub, hub.prompt)}
-                  aria-label={`Open ${hub.title}: ${hub.desc}`}
-                >
-                  <span className="hub-icon" aria-hidden="true">
-                    {hub.icon}
-                  </span>
-                  <span className="hub-title">{hub.title}</span>
-                  <span className="hub-desc">{hub.desc}</span>
-                  <span className="card-open">
-                    Explore <span aria-hidden="true">↗</span>
-                  </span>
-                </button>
-              ))}
-            </section>
-
-            <section className="quick-section">
-              <div className="section-heading">
-                <div>
-                  <p className="eyebrow">A GOOD PLACE TO START</p>
-                  <h2>Quick picks</h2>
-                </div>
-                <p>Choose an idea to ask Nexora AI</p>
-              </div>
-
-              <div className="quick-grid">
-                {QUICK_IDEAS.map((idea) => (
-                  <button
-                    className="quick-card"
-                    key={idea.title}
-                    type="button"
-                    data-tv-focus="true"
-                    onClick={() =>
-                      openHubWithPrompt(idea.hubId, idea.prompt)
-                    }
-                  >
-                    <span className="quick-icon">{idea.icon}</span>
-                    <span className="quick-title">{idea.title}</span>
-                    <span className="quick-meta">
-                      {idea.time} · {idea.hub}
-                    </span>
-                    <span className="quick-arrow">Ask Nexora ↗</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </>
-        ) : (
-          <section className="hub-view">
-            <button
-              className="back-button"
-              type="button"
-              data-tv-focus="true"
-              data-back-button
-              onClick={goHome}
-            >
-              ← <span>Back to Home</span>
-            </button>
-
-            <div className="view-heading">
-              <div className={`large-hub-icon ${activeHub.color}`}>
-                {activeHub.icon}
-              </div>
-              <div>
-                <p className="eyebrow">NEXORA EXPERIENCE</p>
-                <h1>{activeHub.title}</h1>
-                <p className="intro">{activeHub.desc}</p>
-              </div>
-            </div>
-
-            <div className="assistant-layout">
-              <div className="assistant-main panel">
-                <p className="eyebrow">YOUR PERSONAL ACTIVITY GUIDE</p>
-
-                <h2>
-                  {activeHub.id === 'learning'
-                    ? 'What would you like to learn?'
-                    : activeHub.id === 'wellness'
-                      ? 'How would you like to reset?'
-                      : activeHub.id === 'family'
-                        ? 'Ready for family fun?'
-                        : activeHub.id === 'brain'
-                          ? 'Ready to challenge your mind?'
-                          : 'What are you in the mood for?'}
-                </h2>
-
-                <p className="panel-copy">
-                  Choose a suggestion or ask Nexora AI for a personalized
-                  activity. Tell us how much time you have.
-                </p>
-
-                <div className="mood-row" aria-label="Quick suggestions">
-                  {MOODS.map((mood) => (
-                    <button
-                      type="button"
-                      className="mood-chip"
-                      key={mood.label}
-                      data-tv-focus="true"
-                      onClick={() => usePrompt(mood.prompt)}
-                    >
-                      {mood.icon} {mood.label}
-                    </button>
-                  ))}
-                </div>
-
-                <form className="ask-form" onSubmit={askAI}>
-                  <label htmlFor="nexora-prompt">Your request</label>
-
-                  <div className="input-row">
-                    <input
-                      id="nexora-prompt"
-                      data-prompt-input
-                      data-tv-focus="true"
-                      value={message}
-                      onChange={(event) => setMessage(event.target.value)}
-                      placeholder="Tell Nexora what you'd like to do..."
-                      autoComplete="off"
-                      disabled={loading}
-                    />
-
-                    <button
-                      className="primary-button"
-                      type="submit"
-                      data-tv-focus="true"
-                      disabled={loading || !message.trim()}
-                    >
-                      {loading ? 'Thinking…' : 'Ask AI'}{' '}
-                      <span aria-hidden="true">→</span>
-                    </button>
-                  </div>
-                </form>
-
-                {loading && (
-                  <div className="status panel-message" role="status">
-                    <span className="spinner" />
-                    Nexora is preparing your suggestion. This may take a
-                    moment.
-                  </div>
-                )}
-
-                {error && (
-                  <div className="error-message" role="alert">
-                    <strong>Couldn't reach Nexora AI</strong>
-                    <p>{error}</p>
-                    <button
-                      type="button"
-                      className="text-button"
-                      data-tv-focus="true"
-                      onClick={() => usePrompt(lastPrompt || message)}
-                    >
-                      Restore request
-                    </button>
-                  </div>
-                )}
-
-                {reply && (
-                  <div className="recommendation" aria-live="polite">
-                    <div className="recommendation-title">
-                      <span className="bot-icon">✦</span>
-                      <div>
-                        <p className="eyebrow">YOUR NEXT GOOD THING</p>
-                        <h3>Nexora recommends</h3>
-                      </div>
-                    </div>
-
-                    <FormattedReply text={reply} />
-
-                    <div className="recommendation-actions">
-                      <button
-                        type="button"
-                        data-tv-focus="true"
-                        className="secondary-button"
-                        onClick={askForAnotherIdea}
-                      >
-                        Another idea ↻
-                      </button>
-
-                      <button
-                        type="button"
-                        data-tv-focus="true"
-                        className="text-button"
-                        onClick={() => {
-                          setReply('');
-                          setError('');
-                        }}
-                      >
-                        Clear result
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <aside className="assistant-aside panel">
-                <div className="aside-orb">✦</div>
-
-                <p className="eyebrow">MADE FOR YOUR MOMENT</p>
-                <h3>Small activities. Better breaks.</h3>
-
-                <ul className="benefit-list">
-                  <li>Suggestions matched to your chosen hub</li>
-                  <li>Short activities with clear steps</li>
-                  <li>Learn, relax, connect, and grow</li>
-                  <li>AI-powered activity ideas</li>
-                </ul>
-
-                <div className="privacy-note">
-                  <span>🔒</span>
-                  <p>
-                    <strong>Hosted AI service</strong>
-                    <br />
-                    Your prompt is sent to Nexora's backend for processing
-                    by the AI provider.
-                  </p>
-                </div>
-              </aside>
-            </div>
-          </section>
-        )}
-      </main>
-
-      <footer className="footer">
-        <span className="footer-brand">
-          NEXORA <span>Fire TV</span>
-        </span>
-        <span>Learn · Relax · Connect · Grow</span>
-        <span>Responsive web experience</span>
-      </footer>
-    </div>
-  );
-}
+app.listen(PORT, () => {
+  console.log(`Nexora AI listening on port ${PORT}`);
+});
