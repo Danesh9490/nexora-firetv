@@ -1,15 +1,28 @@
 
-const CACHE_NAME = 'nexora-cache-v1';
+const CACHE_NAME = 'nexora-cache-v2';
 const APP_FILES = [
   '/',
   '/manifest.webmanifest',
-  '/icons/nexora.svg'
+  '/Nexora.svg'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_FILES))
+      .then(async (cache) => {
+        await Promise.all(
+          APP_FILES.map(async (url) => {
+            try {
+              const response = await fetch(url);
+              if (response.ok) {
+                await cache.put(url, response);
+              }
+            } catch (error) {
+              console.warn('Could not cache:', url, error);
+            }
+          })
+        );
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -20,7 +33,10 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith('nexora-cache-') && key !== CACHE_NAME)
+            .filter((key) =>
+              key.startsWith('nexora-cache-') &&
+              key !== CACHE_NAME
+            )
             .map((key) => caches.delete(key))
         )
       )
@@ -45,7 +61,9 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          caches.open(CACHE_NAME)
+            .then((cache) => cache.put(request, copy))
+            .catch(() => {});
         }
         return response;
       })
